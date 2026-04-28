@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rick & Morty DB</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: sans-serif;
+      background: #0a0a0a;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      color: #97ce4c;
+      margin-bottom: 8px;
+    }
+
+    p.subtitle {
+      color: #888;
+      margin-bottom: 24px;
+      font-size: 0.95rem;
+    }
+
+    .hints {
+      width: 100%;
+      max-width: 700px;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 28px;
+    }
+
+    .hints p {
+      font-size: 0.8rem;
+      color: #666;
+      margin-bottom: 10px;
+    }
+
+    .hints ul {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .hints ul li {
+      background: #252525;
+      border: 1px solid #333;
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      color: #aaa;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .hints ul li:hover {
+      border-color: #97ce4c;
+      color: #97ce4c;
+    }
+
+    .search-box {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+      max-width: 700px;
+      margin-bottom: 32px;
+    }
+
+    .search-box input {
+      flex: 1;
+      padding: 14px 18px;
+      border-radius: 8px;
+      border: 1px solid #333;
+      background: #1a1a1a;
+      color: #e0e0e0;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-box input:focus {
+      border-color: #97ce4c;
+    }
+
+    .search-box button {
+      padding: 14px 24px;
+      border-radius: 8px;
+      border: none;
+      background: #97ce4c;
+      color: #0a0a0a;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .search-box button:hover {
+      background: #7fb83a;
+    }
+
+    .result-area {
+      width: 100%;
+      max-width: 900px;
+      min-height: 400px;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    #placeholder {
+      color: #444;
+      font-size: 1rem;
+      text-align: center;
+    }
+
+    #loading {
+      color: #97ce4c;
+      font-size: 1rem;
+      display: none;
+    }
+
+    #errorMsg {
+      color: #e05c5c;
+      font-size: 0.95rem;
+      text-align: center;
+      display: none;
+    }
+
+    #chartImg {
+      width: 100%;
+      border-radius: 8px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Rick & Morty Explorer</h1>
+  <p class="subtitle">Ask a question about the database and get a chart</p>
+
+  <div class="hints">
+    <p>Not sure what to ask? Try one of these:</p>
+    <ul>
+      <li onclick="setQuestion(this)">How many characters are there per species?</li>
+      <li onclick="setQuestion(this)">How many alive vs dead characters are there?</li>
+      <li onclick="setQuestion(this)">Which locations have the most characters?</li>
+      <li onclick="setQuestion(this)">How many characters per gender?</li>
+      <li onclick="setQuestion(this)">How many episodes per season?</li>
+    </ul>
+  </div>
+
+  <div class="search-box">
+    <input id="question" type="text" placeholder="How many characters are there per species?" />
+    <button onclick="askQuestion()">Ask</button>
+  </div>
+
+  <div class="result-area" id="resultArea">
+    <p id="placeholder">Your chart will appear here</p>
+    <p id="loading">Generating chart...</p>
+    <p id="errorMsg"></p>
+    <img id="chartImg" alt="Generated chart" />
+  </div>
+
+  <script>
+    function setQuestion(el) {
+      document.getElementById("question").value = el.textContent;
+    }
+
+    function showOnly(id) {
+      ["placeholder", "loading", "errorMsg", "chartImg"].forEach(el => {
+        document.getElementById(el).style.display = el === id ? "block" : "none";
+      });
+    }
+
+    async function askQuestion() {
+      const question = document.getElementById("question").value.trim();
+      if (!question) return;
+
+      showOnly("loading");
+
+      const response = await fetch("/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question })
+      });
+
+      const data = await response.json();
+
+      if (data.status === "error") {
+        document.getElementById("errorMsg").textContent = data.message;
+        showOnly("errorMsg");
+      } else {
+        document.getElementById("chartImg").src = "data:image/png;base64," + data.chart;
+        showOnly("chartImg");
+      }
+    }
+
+    document.getElementById("question").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") askQuestion();
+    });
+  </script>
+
+</body>
+</html>
