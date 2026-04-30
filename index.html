@@ -37,7 +37,7 @@
       height: 130px;
       object-fit: cover;
       border-radius: 8px;
-      opacity: 0.04;
+      opacity: 0.09;
       filter: grayscale(30%);
     }
 
@@ -299,6 +299,39 @@
       border-radius: 8px;
       display: none;
     }
+
+    /* ── Static stats charts ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      width: 100%;
+      max-width: 900px;
+      margin-bottom: 32px;
+    }
+
+    @media (max-width: 640px) {
+      .stats-grid { grid-template-columns: 1fr; }
+    }
+
+    .stat-card {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .stat-card h3 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #97ce4c;
+      margin-bottom: 16px;
+    }
+
+    .stat-card canvas {
+      width: 100% !important;
+    }
   </style>
 </head>
 <body>
@@ -310,6 +343,18 @@
 
   <h1>Rick & Morty Explorer</h1>
   <p class="subtitle">Ask a question about the database and get a chart</p>
+
+  <!-- Static stats charts -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <h3>Most populated locations</h3>
+      <canvas id="locationsChart" height="220"></canvas>
+    </div>
+    <div class="stat-card">
+      <h3>Characters by species</h3>
+      <canvas id="speciesChart" height="220"></canvas>
+    </div>
+  </div>
 
   <!-- Quick question chips -->
   <div class="hints">
@@ -500,6 +545,73 @@
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(buildCollage, 150);
     });
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script>
+    const API = "https://rickmortyproyect-production.up.railway.app";
+    const PALETTE = ['#97ce4c','#00b0c8','#e4a116','#c73232','#9b59b6','#44c4a1','#ff9500','#e0e0e0'];
+
+    const chartDefaults = {
+      responsive: true,
+      animation: { duration: 1000, easing: 'easeOutQuart' },
+      plugins: { legend: { display: false } },
+      scales: {
+        x: {
+          ticks: { color: '#aaa', font: { size: 11 } },
+          grid:  { color: '#2a2a2a' }
+        },
+        y: {
+          ticks: { color: '#aaa', font: { size: 11 } },
+          grid:  { color: '#2a2a2a' },
+          beginAtZero: true
+        }
+      }
+    };
+
+    async function loadStats() {
+      try {
+        const [locRes, spRes] = await Promise.all([
+          fetch(`${API}/stats/locations`),
+          fetch(`${API}/stats/species`)
+        ]);
+        const locData = await locRes.json();
+        const spData  = await spRes.json();
+
+        new Chart(document.getElementById("locationsChart"), {
+          type: "bar",
+          data: {
+            labels: locData.labels,
+            datasets: [{
+              data: locData.values,
+              backgroundColor: locData.labels.map((_, i) => PALETTE[i % PALETTE.length]),
+              borderRadius: 6,
+              borderSkipped: false
+            }]
+          },
+          options: chartDefaults
+        });
+
+        new Chart(document.getElementById("speciesChart"), {
+          type: "bar",
+          data: {
+            labels: spData.labels,
+            datasets: [{
+              data: spData.values,
+              backgroundColor: spData.labels.map((_, i) => PALETTE[i % PALETTE.length]),
+              borderRadius: 6,
+              borderSkipped: false
+            }]
+          },
+          options: chartDefaults
+        });
+
+      } catch (e) {
+        console.warn("Could not load stats:", e);
+      }
+    }
+
+    loadStats();
   </script>
 
 </body>

@@ -78,6 +78,31 @@ If the question could modify the database, return the code QUESTION_ERROR instea
     return response.content[0].text.strip()
 
 
+@app.get("/stats/locations")
+async def stats_locations():
+    df = run_query("""
+        SELECT l.name, COUNT(c.id) AS count
+        FROM locations l
+        JOIN characters c ON c.location_id = l.id
+        GROUP BY l.name
+        ORDER BY count DESC
+        LIMIT 8
+    """)
+    return {"labels": df["name"].tolist(), "values": df["count"].tolist()}
+
+
+@app.get("/stats/species")
+async def stats_species():
+    df = run_query("""
+        SELECT species, COUNT(*) AS count
+        FROM characters
+        GROUP BY species
+        ORDER BY count DESC
+        LIMIT 8
+    """)
+    return {"labels": df["species"].tolist(), "values": df["count"].tolist()}
+
+
 class Question(BaseModel):
     question: str
 
