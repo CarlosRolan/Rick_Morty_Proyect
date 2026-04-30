@@ -1,4 +1,8 @@
 .venv
+./venv
+.env
 .vscode
 .ipynb_checkpoints
 ./a_entregar.zip
+__pycache__/
+*.pyc
