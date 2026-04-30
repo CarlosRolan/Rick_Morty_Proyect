@@ -20,6 +20,48 @@
       flex-direction: column;
       align-items: center;
       padding: 40px 20px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    #collage {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    #collage img {
+      position: absolute;
+      width: 130px;
+      height: 130px;
+      object-fit: cover;
+      border-radius: 8px;
+      opacity: 0.15;
+      filter: grayscale(30%);
+    }
+
+    body > *:not(#collage) {
+      position: relative;
+      z-index: 1;
+    }
+
+    .portfolio-btn {
+      align-self: flex-start;
+      margin-bottom: 24px;
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: 1px solid #333;
+      background: #1a1a1a;
+      color: #888;
+      font-size: 0.85rem;
+      text-decoration: none;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .portfolio-btn:hover {
+      border-color: #97ce4c;
+      color: #97ce4c;
     }
 
     h1 {
@@ -34,6 +76,7 @@
       font-size: 0.95rem;
     }
 
+    /* ── Hints ── */
     .hints {
       width: 100%;
       max-width: 700px;
@@ -41,7 +84,7 @@
       border: 1px solid #2a2a2a;
       border-radius: 8px;
       padding: 16px 20px;
-      margin-bottom: 28px;
+      margin-bottom: 16px;
     }
 
     .hints p {
@@ -73,6 +116,107 @@
       color: #97ce4c;
     }
 
+    /* ── Help panel ── */
+    .help-panel {
+      width: 100%;
+      max-width: 700px;
+      margin-bottom: 28px;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .help-toggle {
+      width: 100%;
+      background: #1a1a1a;
+      border: none;
+      color: #666;
+      font-size: 0.8rem;
+      padding: 12px 20px;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: color 0.2s;
+    }
+
+    .help-toggle:hover { color: #97ce4c; }
+
+    .help-toggle .arrow {
+      transition: transform 0.3s;
+      font-style: normal;
+    }
+
+    .help-toggle.open .arrow { transform: rotate(180deg); }
+
+    .help-body {
+      background: #111;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease;
+    }
+
+    .help-body.open { max-height: 600px; }
+
+    .help-inner {
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      font-size: 0.82rem;
+    }
+
+    .help-inner h3 {
+      color: #97ce4c;
+      margin-bottom: 10px;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .schema-table {
+      color: #777;
+      line-height: 1.8;
+    }
+
+    .schema-table .table-name {
+      color: #97ce4c;
+      font-weight: bold;
+      margin-top: 8px;
+    }
+
+    .schema-table .col {
+      padding-left: 12px;
+      color: #555;
+    }
+
+    .schema-table .col span {
+      color: #444;
+      font-size: 0.75rem;
+    }
+
+    .manual p {
+      color: #666;
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+
+    .manual .do { color: #97ce4c; }
+    .manual .dont { color: #e05c5c; }
+
+    /* ── Invalid question shake ── */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%       { transform: translateX(-8px); }
+      40%       { transform: translateX(8px); }
+      60%       { transform: translateX(-6px); }
+      80%       { transform: translateX(6px); }
+    }
+
+    .shake { animation: shake 0.4s ease; }
+
+    /* ── Search box ── */
     .search-box {
       display: flex;
       gap: 12px;
@@ -93,9 +237,9 @@
       transition: border-color 0.2s;
     }
 
-    .search-box input:focus {
-      border-color: #97ce4c;
-    }
+    .search-box input:focus { border-color: #97ce4c; }
+
+    .search-box input.invalid { border-color: #e05c5c; }
 
     .search-box button {
       padding: 14px 24px;
@@ -109,10 +253,9 @@
       transition: background 0.2s;
     }
 
-    .search-box button:hover {
-      background: #7fb83a;
-    }
+    .search-box button:hover { background: #7fb83a; }
 
+    /* ── Result area ── */
     .result-area {
       width: 100%;
       max-width: 900px;
@@ -126,24 +269,30 @@
       padding: 24px;
     }
 
-    #placeholder {
-      color: #444;
-      font-size: 1rem;
+    #placeholder { color: #444; font-size: 1rem; text-align: center; }
+    #loading     { color: #97ce4c; font-size: 1rem; display: none; }
+
+    #serverError, #noCredits {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
       text-align: center;
     }
 
-    #loading {
-      color: #97ce4c;
-      font-size: 1rem;
-      display: none;
+    #serverError .portal, #noCredits .portal {
+      font-size: 3rem;
+      animation: spin 3s linear infinite;
     }
 
-    #errorMsg {
-      color: #e05c5c;
-      font-size: 0.95rem;
-      text-align: center;
-      display: none;
+    @keyframes spin {
+      0%   { transform: rotate(0deg) scale(1);   filter: hue-rotate(0deg); }
+      50%  { transform: rotate(180deg) scale(1.2); filter: hue-rotate(180deg); }
+      100% { transform: rotate(360deg) scale(1);  filter: hue-rotate(360deg); }
     }
+
+    #serverError p, #noCredits p { color: #97ce4c; font-size: 1rem; }
+    #serverError small, #noCredits small { color: #555; font-size: 0.8rem; }
 
     #chartImg {
       width: 100%;
@@ -154,9 +303,15 @@
 </head>
 <body>
 
+  <div id="collage"></div>
+
+  <!-- TODO: update portfolio URL when domain is final -->
+  <a href="https://portfolio-git-desarrollo-carlosrolandiaz-gmailcoms-projects.vercel.app/" target="_blank" class="portfolio-btn">👤 About the creator</a>
+
   <h1>Rick & Morty Explorer</h1>
   <p class="subtitle">Ask a question about the database and get a chart</p>
 
+  <!-- Quick question chips -->
   <div class="hints">
     <p>Not sure what to ask? Try one of these:</p>
     <ul>
@@ -168,15 +323,64 @@
     </ul>
   </div>
 
+  <!-- Collapsible help panel -->
+  <div class="help-panel" id="helpPanel">
+    <button class="help-toggle" id="helpToggle" onclick="toggleHelp()">
+      <span>📖 What can I ask? — Database info & usage guide</span>
+      <i class="arrow">▾</i>
+    </button>
+    <div class="help-body" id="helpBody">
+      <div class="help-inner">
+
+        <div class="schema-table">
+          <h3>Available data</h3>
+          <div class="table-name">characters</div>
+          <div class="col">id, name, status <span>(Alive/Dead/unknown)</span></div>
+          <div class="col">species, type, gender</div>
+          <div class="col">location_id → locations</div>
+          <div class="table-name">locations</div>
+          <div class="col">id, name, type, dimension</div>
+          <div class="table-name">episodes</div>
+          <div class="col">id, name, air_date, episode <span>(e.g. S01E03)</span></div>
+          <div class="table-name">character_episode</div>
+          <div class="col">character_id, episode_id</div>
+        </div>
+
+        <div class="manual">
+          <h3>How to ask</h3>
+          <p>Questions must be answerable with the data above. The AI will turn your question into a SQL query automatically.</p>
+          <p class="do">✔ How many characters per species?</p>
+          <p class="do">✔ Which locations appear the most?</p>
+          <p class="do">✔ How many characters appeared in episode S01E01?</p>
+          <p class="dont">✘ What is the weather on Cronenberg Earth?</p>
+          <p class="dont">✘ Who is the strongest character?</p>
+          <p class="dont">✘ Delete all dead characters</p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Search -->
   <div class="search-box">
     <input id="question" type="text" placeholder="How many characters are there per species?" />
     <button onclick="askQuestion()">Ask</button>
   </div>
 
+  <!-- Result -->
   <div class="result-area" id="resultArea">
     <p id="placeholder">Your chart will appear here</p>
     <p id="loading">Generating chart...</p>
-    <p id="errorMsg"></p>
+    <div id="serverError">
+      <div class="portal">🌀</div>
+      <p>Wubba Lubba Dub Dub! Something went wrong.</p>
+      <small>We're working on it, Morty. Don't panic.</small>
+    </div>
+    <div id="noCredits">
+      <div class="portal">💸</div>
+      <p>Servers cost money, Morty.</p>
+      <small>Looks like this one is inactive to save costs. Come back later.</small>
+    </div>
     <img id="chartImg" alt="Generated chart" />
   </div>
 
@@ -185,10 +389,42 @@
       document.getElementById("question").value = el.textContent;
     }
 
+    function toggleHelp(forceOpen = false) {
+      const toggle = document.getElementById("helpToggle");
+      const body   = document.getElementById("helpBody");
+      const isOpen = body.classList.contains("open");
+
+      if (forceOpen || !isOpen) {
+        body.classList.add("open");
+        toggle.classList.add("open");
+      } else {
+        body.classList.remove("open");
+        toggle.classList.remove("open");
+      }
+    }
+
     function showOnly(id) {
-      ["placeholder", "loading", "errorMsg", "chartImg"].forEach(el => {
-        document.getElementById(el).style.display = el === id ? "block" : "none";
+      ["placeholder", "loading", "serverError", "noCredits", "chartImg"].forEach(el => {
+        const element = document.getElementById(el);
+        const isFlex  = el === "serverError" || el === "noCredits";
+        element.style.display = el === id ? (isFlex ? "flex" : "block") : "none";
       });
+    }
+
+    function triggerInvalidQuestion() {
+      const input     = document.getElementById("question");
+      const helpPanel = document.getElementById("helpPanel");
+
+      // Red border on input + shake
+      input.classList.add("invalid", "shake");
+      setTimeout(() => input.classList.remove("shake"), 400);
+      setTimeout(() => input.classList.remove("invalid"), 2000);
+
+      // Open help panel and scroll to it
+      toggleHelp(true);
+      helpPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+
+      showOnly("placeholder");
     }
 
     async function askQuestion() {
@@ -197,25 +433,72 @@
 
       showOnly("loading");
 
-      const response = await fetch("/ask", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question })
-      });
+      try {
+        const response = await fetch("http://localhost:8000/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question })
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (data.status === "error") {
-        document.getElementById("errorMsg").textContent = data.message;
-        showOnly("errorMsg");
-      } else {
-        document.getElementById("chartImg").src = "data:image/png;base64," + data.chart;
-        showOnly("chartImg");
+        if (data.status === "error") {
+          triggerInvalidQuestion();
+        } else if (data.status === "no_credits") {
+          showOnly("noCredits");
+        } else if (data.status === "server_error") {
+          showOnly("serverError");
+        } else {
+          document.getElementById("chartImg").src = "data:image/png;base64," + data.chart;
+          showOnly("chartImg");
+        }
+      } catch {
+        showOnly("serverError");
       }
     }
 
     document.getElementById("question").addEventListener("keydown", (e) => {
       if (e.key === "Enter") askQuestion();
+    });
+
+    // Build background collage from Rick & Morty API character avatars.
+    // Images are never removed — only repositioned or hidden, so the browser keeps them cached.
+    const collage = document.getElementById("collage");
+    const step    = 140;
+    const pool    = [];
+
+    function buildCollage() {
+      const cols  = Math.ceil(window.innerWidth  / step) + 1;
+      const rows  = Math.ceil(window.innerHeight / step) + 1;
+      const total = cols * rows;
+
+      // Add new images to the pool only if needed
+      while (pool.length < total) {
+        const id  = (pool.length % 826) + 1;
+        const img = document.createElement("img");
+        img.src   = `https://rickandmortyapi.com/api/character/avatar/${id}.jpeg`;
+        collage.appendChild(img);
+        pool.push(img);
+      }
+
+      // Reposition visible images, hide the excess
+      pool.forEach((img, i) => {
+        if (i < total) {
+          img.style.display = "block";
+          img.style.left    = `${(i % cols) * step}px`;
+          img.style.top     = `${Math.floor(i / cols) * step}px`;
+        } else {
+          img.style.display = "none";
+        }
+      });
+    }
+
+    buildCollage();
+
+    let resizeTimer;
+    window.addEventListener("resize", () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(buildCollage, 150);
     });
   </script>
 

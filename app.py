@@ -1,16 +1,18 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from dotenv import load_dotenv
 import anthropic
 from sqlalchemy import create_engine, text
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-import base64
-import io
 import json
 import os
+from charts import choose_chart, generate_chart
+
+load_dotenv()
 
 app = FastAPI()
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 client = anthropic.Anthropic()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -76,52 +78,6 @@ If the question could modify the database, return the code QUESTION_ERROR instea
     return response.content[0].text.strip()
 
 
-def choose_chart(df: pd.DataFrame) -> dict:
-    # Sends the DataFrame structure and a sample to Claude, which decides
-    # the most suitable seaborn chart type and the columns to use.
-    info = {
-        "columns": {col: str(dtype) for col, dtype in df.dtypes.items()},
-        "rows": len(df),
-        "sample": df.head(3).to_dict(orient="records")
-    }
-    response = client.messages.create(
-        model="claude-opus-4-7",
-        max_tokens=256,
-        system="""You are a data visualization expert using seaborn.
-Given the schema and a sample of a DataFrame, decide which chart type fits best.
-Return ONLY a valid JSON with this exact format:
-{"chart": "barplot|countplot|lineplot|scatterplot|histplot|boxplot", "x": "column_or_null", "y": "column_or_null", "hue": "column_or_null"}""",
-        messages=[{"role": "user", "content": json.dumps(info, default=str)}]
-    )
-    return json.loads(response.content[0].text.strip())
-
-
-def generate_chart(df: pd.DataFrame, chart_info: dict) -> str:
-    # Generates a seaborn chart from the DataFrame using the chart type chosen by Claude.
-    # Returns the chart as a base64-encoded PNG string.
-    fig, ax = plt.subplots(figsize=(10, 6))
-
-    x   = chart_info.get("x") or None
-    y   = chart_info.get("y") or None
-    hue = chart_info.get("hue") or None
-
-    kwargs = {"data": df, "ax": ax}
-    if x:   kwargs["x"] = x
-    if y:   kwargs["y"] = y
-    if hue: kwargs["hue"] = hue
-
-    chart = chart_info.get("chart", "barplot")
-    getattr(sns, chart)(**kwargs)
-
-    ax.set_title("")
-    plt.tight_layout()
-
-    buf = io.BytesIO()
-    fig.savefig(buf, format="png", bbox_inches="tight")
-    plt.close(fig)
-    return base64.b64encode(buf.getvalue()).decode()
-
-
 class Question(BaseModel):
     question: str
 
@@ -130,18 +86,25 @@ class Question(BaseModel):
 async def ask(body: Question):
     # Main endpoint: receives a natural language question, generates SQL via Claude,
     # queries the database, picks the best chart and returns it as base64.
-    sql = question_to_sql(body.question)
-    print(f"Question: {body.question}")
-    print(f"Generated SQL: {sql}")
+    try:
+        sql = question_to_sql(body.question)
+        print(f"Question: {body.question}")
+        print(f"Generated SQL: {sql}")
 
-    if sql == "QUESTION_ERROR":
-        return {"status": "error", "message": "The question is not valid for querying the database."}
+        if sql == "QUESTION_ERROR":
+            return {"status": "error", "message": "The question is not valid for querying the database."}
 
-    df = run_query(sql)
-    print(f"Rows returned: {len(df)}")
+        df = run_query(sql)
+        print(f"Rows returned: {len(df)}")
 
-    chart_info = choose_chart(df)
-    print(f"Chart selected: {chart_info}")
+        chart_info = choose_chart(df)
+        print(f"Chart selected: {chart_info}")
 
-    chart_b64 = generate_chart(df, chart_info)
-    return {"status": "ok", "chart": chart_b64}
+        chart_b64 = generate_chart(df, chart_info)
+        return {"status": "ok", "chart": chart_b64}
+
+    except Exception as e:
+        print(f"Error: {e}")
+        if "credit balance is too low" in str(e):
+            return {"status": "no_credits"}
+        return {"status": "server_error"}
