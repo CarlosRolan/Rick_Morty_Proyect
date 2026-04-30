@@ -87,24 +87,30 @@ async def ask(body: Question):
     # Main endpoint: receives a natural language question, generates SQL via Claude,
     # queries the database, picks the best chart and returns it as base64.
     try:
+        print(f"[1] Question received: {body.question}")
         sql = question_to_sql(body.question)
-        print(f"Question: {body.question}")
-        print(f"Generated SQL: {sql}")
+        print(f"[2] Generated SQL: {sql}")
 
         if sql == "QUESTION_ERROR":
             return {"status": "error", "message": "The question is not valid for querying the database."}
 
+        print(f"[3] Running query...")
         df = run_query(sql)
-        print(f"Rows returned: {len(df)}")
+        print(f"[4] Rows returned: {len(df)}, columns: {list(df.columns)}")
 
+        print(f"[5] Choosing chart...")
         chart_info = choose_chart(df)
-        print(f"Chart selected: {chart_info}")
+        print(f"[6] Chart selected: {chart_info}")
 
+        print(f"[7] Generating chart...")
         chart_b64 = generate_chart(df, chart_info)
+        print(f"[8] Chart generated OK, size: {len(chart_b64)} bytes")
         return {"status": "ok", "chart": chart_b64}
 
     except Exception as e:
-        print(f"Error: {e}")
+        import traceback
+        print(f"[ERROR] {e}")
+        print(traceback.format_exc())
         if "credit balance is too low" in str(e):
             return {"status": "no_credits"}
         return {"status": "server_error"}
